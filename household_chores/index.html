@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>House Chores App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>House Chores App</h1>
+
+  <div class="box">
+    <h2>Add Member</h2>
+    <input type="text" id="memberInput" placeholder="Enter member name">
+    <button onclick="addMember()">Add Member</button>
+  </div>
+
+  <div class="box">
+    <h2>Add Chore</h2>
+    <input type="text" id="choreInput" placeholder="Enter chore name">
+    <button onclick="addChore()">Add Chore</button>
+  </div>
+
+  <div class="box">
+    <h2>Assign Task</h2>
+
+    <select id="choreSelect"></select>
+    <select id="memberSelect"></select>
+
+    <select id="daySelect">
+      <option>Monday</option>
+      <option>Tuesday</option>
+      <option>Wednesday</option>
+      <option>Thursday</option>
+      <option>Friday</option>
+      <option>Saturday</option>
+      <option>Sunday</option>
+    </select>
+
+    <button onclick="assignTask()">Assign Task</button>
+  </div>
+
+  <div class="box">
+    <h2>Task List</h2>
+    <div id="taskList"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
