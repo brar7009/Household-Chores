@@ -1,102 +1,120 @@
-let members = JSON.parse(localStorage.getItem("members")) || [];
-let chores = JSON.parse(localStorage.getItem("chores")) || [];
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  onSnapshot,
+  doc,
+  updateDoc,
+  deleteDoc
+} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
-function saveData() {
-  localStorage.setItem("members", JSON.stringify(members));
-  localStorage.setItem("chores", JSON.stringify(chores));
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-}
+const firebaseConfig = {
+  apiKey: "AIzaSyATL5dBKS1l_JBoOsFjLWNCe3YU2PoQDf8",
+  authDomain: "household-chores-e345a.firebaseapp.com",
+  projectId: "household-chores-e345a",
+  storageBucket: "household-chores-e345a.firebasestorage.app",
+  messagingSenderId: "430200177655",
+  appId: "1:430200177655:web:4711ccd99c6f8906d124f2",
+  measurementId: "G-F7MFBGLKYY"
+};
 
-function addMember() {
-  let name = document.getElementById("memberInput").value;
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let members = [];
+let chores = [];
+let tasks = [];
+
+const membersRef = collection(db, "members");
+const choresRef = collection(db, "chores");
+const tasksRef = collection(db, "tasks");
+
+window.addMember = async function () {
+  const name = document.getElementById("memberInput").value.trim();
 
   if (name === "") {
     alert("Please enter a member name");
     return;
   }
 
-  members.push(name);
+  await addDoc(membersRef, {
+    name: name
+  });
+
   document.getElementById("memberInput").value = "";
+};
 
-  saveData();
-  updateSelects();
-}
-
-function addChore() {
-  let chore = document.getElementById("choreInput").value;
+window.addChore = async function () {
+  const chore = document.getElementById("choreInput").value.trim();
 
   if (chore === "") {
     alert("Please enter a chore name");
     return;
   }
 
-  chores.push(chore);
+  await addDoc(choresRef, {
+    name: chore
+  });
+
   document.getElementById("choreInput").value = "";
+};
 
-  saveData();
-  updateSelects();
-}
-
-function updateSelects() {
-  let memberSelect = document.getElementById("memberSelect");
-  let choreSelect = document.getElementById("choreSelect");
-
-  memberSelect.innerHTML = "";
-  choreSelect.innerHTML = "";
-
-  members.forEach(function(member) {
-    let option = document.createElement("option");
-    option.textContent = member;
-    memberSelect.appendChild(option);
-  });
-
-  chores.forEach(function(chore) {
-    let option = document.createElement("option");
-    option.textContent = chore;
-    choreSelect.appendChild(option);
-  });
-}
-
-function assignTask() {
+window.assignTask = async function () {
   if (members.length === 0 || chores.length === 0) {
     alert("Please add at least one member and one chore first");
     return;
   }
 
-  let task = {
+  await addDoc(tasksRef, {
     chore: document.getElementById("choreSelect").value,
     member: document.getElementById("memberSelect").value,
     day: document.getElementById("daySelect").value,
     done: false
-  };
+  });
+};
 
-  tasks.push(task);
+window.markDone = async function (id) {
+  const taskDoc = doc(db, "tasks", id);
 
-  saveData();
-  showTasks();
-}
+  await updateDoc(taskDoc, {
+    done: true
+  });
+};
 
-function markDone(index) {
-  tasks[index].done = true;
+window.deleteTask = async function (id) {
+  const taskDoc = doc(db, "tasks", id);
+  await deleteDoc(taskDoc);
+};
 
-  saveData();
-  showTasks();
-}
+function updateSelects() {
+  const memberSelect = document.getElementById("memberSelect");
+  const choreSelect = document.getElementById("choreSelect");
 
-function deleteTask(index) {
-  tasks.splice(index, 1);
+  memberSelect.innerHTML = "";
+  choreSelect.innerHTML = "";
 
-  saveData();
-  showTasks();
+  members.forEach(function (member) {
+    const option = document.createElement("option");
+    option.textContent = member.name;
+    option.value = member.name;
+    memberSelect.appendChild(option);
+  });
+
+  chores.forEach(function (chore) {
+    const option = document.createElement("option");
+    option.textContent = chore.name;
+    option.value = chore.name;
+    choreSelect.appendChild(option);
+  });
 }
 
 function showTasks() {
-  let taskList = document.getElementById("taskList");
+  const taskList = document.getElementById("taskList");
   taskList.innerHTML = "";
 
-  tasks.forEach(function(task, index) {
-    let div = document.createElement("div");
+  tasks.forEach(function (task) {
+    const div = document.createElement("div");
     div.className = "task";
 
     if (task.done) {
@@ -108,13 +126,49 @@ function showTasks() {
       Assigned to: ${task.member}<br>
       Day: ${task.day}<br>
       Status: ${task.done ? "Done" : "Pending"}<br>
-      <button onclick="markDone(${index})">Mark Done</button>
-      <button onclick="deleteTask(${index})">Delete</button>
+      <button onclick="markDone('${task.id}')">Mark Done</button>
+      <button onclick="deleteTask('${task.id}')">Delete</button>
     `;
 
     taskList.appendChild(div);
   });
 }
 
-updateSelects();
-showTasks();
+onSnapshot(membersRef, function (snapshot) {
+  members = [];
+
+  snapshot.forEach(function (doc) {
+    members.push({
+      id: doc.id,
+      ...doc.data()
+    });
+  });
+
+  updateSelects();
+});
+
+onSnapshot(choresRef, function (snapshot) {
+  chores = [];
+
+  snapshot.forEach(function (doc) {
+    chores.push({
+      id: doc.id,
+      ...doc.data()
+    });
+  });
+
+  updateSelects();
+});
+
+onSnapshot(tasksRef, function (snapshot) {
+  tasks = [];
+
+  snapshot.forEach(function (doc) {
+    tasks.push({
+      id: doc.id,
+      ...doc.data()
+    });
+  });
+
+  showTasks();
+});
